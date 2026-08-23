@@ -20,7 +20,7 @@
     <tr>
       <td align="start"><b>Windows</b></td>
       <td align="start">
-        <a href="https://github.com/g60373250-wq/GS.Monitor/releases/download/v1.0.2/gs.monitor-1.0.2.exe">
+        <a href="https://github.com/proto-gs/GS.Monitor/releases/download/v1.0.3/gs.monitor-1.0.3.exe">
           <img src="https://img.shields.io/badge/Setup-x64-4682b4" alt="Windows Setup">
         </a>
       </td>
