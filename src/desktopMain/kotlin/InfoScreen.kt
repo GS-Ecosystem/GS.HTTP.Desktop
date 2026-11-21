@@ -73,7 +73,7 @@ fun InfoScreen(
                     ) {
                         Image(
                             painter = painterResource("ic_gs_ht.png"),
-                            contentDescription = "GS Monitor",
+                            contentDescription = "GS HTTP",
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
                         )
@@ -110,7 +110,7 @@ fun InfoScreen(
                 )
 
                 TextButton(
-                    onClick = { uriHandler.openUri("https://github.com") },
+                    onClick = { uriHandler.openUri("https://github.com/GS-Ecosystem/GS.HTTP.Desktop") },
                     modifier = Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR))),
                     contentPadding = PaddingValues(0.dp)
                 ) {
@@ -156,7 +156,7 @@ fun InfoScreen(
                     }
 
                     TextButton(
-                        onClick = { uriHandler.openUri("https://gs-ht.ru") },
+                        onClick = { uriHandler.openUri("https://gs-ht.ru/PRIVACY_GS.Monitor_.html") },
                         modifier = Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR))),
                         contentPadding = PaddingValues(0.dp)
                     ) {
