@@ -3,8 +3,8 @@ name: Build and Release GS.HTTP
 on:
   push:
     tags:
-      - 'v*' # Запускается автоматически при создании тега (например, v1.1.0)
-  workflow_dispatch: # Позволяет запускать сборку вручную из вкладки Actions
+      - 'v*'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -12,6 +12,7 @@ permissions:
 jobs:
   build:
     strategy:
+      fail-fast: false
       matrix:
         os: [windows-latest, ubuntu-latest]
 
@@ -47,3 +48,4 @@ jobs:
             build/compose/binaries/main/msi/*.msi
             build/compose/binaries/main/exe/*.exe
             build/compose/binaries/main/deb/*.deb
+
