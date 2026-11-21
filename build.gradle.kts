@@ -69,7 +69,7 @@ compose.desktop {
                 shortcut = true
                 menuGroup = "Development"
                 appCategory = "Utility"
-                iconFile.set(project.file("src/desktopMain/resources/ic_gs_ht.png"))
+                iconFile.set(project.file("src/desktopMain/resources/icon.png"))
             }
         }
     }
