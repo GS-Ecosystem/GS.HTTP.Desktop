@@ -73,7 +73,7 @@ fun InfoBottomSheetDialog(
 
 
                 Text(
-                    text = "GS Monitor",
+                    text = "GS HTTP",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Black,
                     color = dropdownTextColor
@@ -118,7 +118,7 @@ fun InfoBottomSheetDialog(
 
 
                 TextButton(
-                    onClick = { uriHandler.openUri("https://github.com/proto-gs/GS.Monitor") },
+                    onClick = { uriHandler.openUri("https://github.com/GS-Ecosystem/GS.HTTP.Desktop") },
                     modifier = Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR))),
                     contentPadding = PaddingValues(0.dp)
                 ) {
