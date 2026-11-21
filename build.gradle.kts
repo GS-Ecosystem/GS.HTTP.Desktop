@@ -4,8 +4,8 @@ plugins {
     id("org.jetbrains.kotlin.plugin.compose") version "2.0.21"
 }
 
-group = "com.gshttp.monitor"
-version = "1.0.3"
+group = "com.proxy.gshttp"
+version = "1.0.4"
 
 kotlin {
     jvmToolchain {
@@ -17,7 +17,6 @@ kotlin {
     }
 
     sourceSets {
-
         val desktopMain by getting {
             dependencies {
                 implementation(compose.desktop.currentOs)
@@ -51,13 +50,15 @@ compose.desktop {
                 targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb)
             }
 
-            packageName = "gs.monitor"
-            packageVersion = "1.0.3"
+            packageName = "GS.HTTP"
+            packageVersion = project.version.toString()
             vendor = "GS Ecosystem"
 
             includeAllModules = true
 
             windows {
+                upgradeUuid = "8f4b9c2a-3d1e-4b7a-9c5f-1a2b3c4d5e6f"
+                perUserInstall = true
                 menu = true
                 shortcut = true
                 dirChooser = true
@@ -74,20 +75,14 @@ compose.desktop {
     }
 }
 
-
-
-
-
 tasks.register<Tar>("packageTarGz") {
-    archiveFileName.set("gs-monitor-${project.version}.tar.gz")
+    archiveFileName.set("gs-http-${project.version}.tar.gz")
     destinationDirectory.set(layout.buildDirectory.dir("distributions"))
     compression = Compression.GZIP
-
 
     dependsOn(provider {
         tasks.matching { it.name.contains("Distributable", ignoreCase = true) }
     })
-
 
     from(layout.buildDirectory.dir("compose/binaries/main-release/app"))
 }

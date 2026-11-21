@@ -14,4 +14,4 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "GS.Monitor"
+rootProject.name = "GS.HTTP"

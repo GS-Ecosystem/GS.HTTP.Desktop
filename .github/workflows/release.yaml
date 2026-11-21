@@ -1,0 +1,49 @@
+name: Build and Release GS.HTTP
+
+on:
+  push:
+    tags:
+      - 'v*' # Запускается автоматически при создании тега (например, v1.1.0)
+  workflow_dispatch: # Позволяет запускать сборку вручную из вкладки Actions
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      matrix:
+        os: [windows-latest, ubuntu-latest]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          java-version: '21'
+          distribution: 'temurin'
+
+      - name: Grant execute permission for gradlew (Linux)
+        if: runner.os == 'Linux'
+        run: chmod +x gradlew
+
+      - name: Build MSI and EXE on Windows
+        if: runner.os == 'Windows'
+        run: ./gradlew packageMsi packageExe
+
+      - name: Build DEB on Linux
+        if: runner.os == 'Linux'
+        run: ./gradlew packageDeb
+
+      - name: Upload Release Assets
+        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/compose/binaries/main/msi/*.msi
+            build/compose/binaries/main/exe/*.exe
+            build/compose/binaries/main/deb/*.deb

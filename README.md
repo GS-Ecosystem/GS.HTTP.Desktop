@@ -4,7 +4,7 @@
   <a href="https://github.com/proto-gs/GS.Monitor/releases"><img src="https://img.shields.io/badge/Release-v1.0.3-orange?style=for-the-badge" alt="Release"></a>
 </p>
 
-# GS.Monitor
+# GS.HTTP
 
 <p align="start">
   <b>Desktop HTTP traffic analysis built on Jetpack Compose Multiplatform (Desktop).</b>
@@ -77,7 +77,7 @@ To stop compilation, use the command `./gradlew --stop`<br> For help and all the
 When choosing operating systems, it is recommended to choose Linux.
 ## License
 
-`GS.Monitor` is licensed under the terms of the MIT License.
+`GS.HTTP` is licensed under the terms of the MIT License.
 
 For more information, see [LICENSE](/LICENSE) file.
 

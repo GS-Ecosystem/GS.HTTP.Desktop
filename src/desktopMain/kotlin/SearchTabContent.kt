@@ -1,38 +1,14 @@
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ScrollableTabRow
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -48,21 +24,30 @@ import java.awt.Cursor
 @Composable
 fun SearchTabContent(
     isDark: Boolean,
+    isMaterialYou: Boolean = false,
     monochromeAccent: Color,
     monochromeSecondary: Color,
     textColorPrimary: Color,
     cardBgColor: Color,
     searchQueryInput: String,
     onSearchQueryChange: (String) -> Unit,
+    onClearSearch: () -> Unit,
     searchResultsList: List<String>,
     isSearchLoading: Boolean,
-    onOpenHistory: () -> Unit,
     onRunSearch: () -> Unit,
     strings: AppStrings,
     onSelectSite: (String) -> Unit
 ) {
     var selectedZoneIndex by remember { mutableStateOf(0) }
     val zones = listOf("ALL", "COM", "ORG", "NET", "RU", "IO", "ME", "CO", "CC", "APP", "DEV")
+
+    val screenBg = if (isMaterialYou) MaterialTheme.colorScheme.background else if (isDark) Color(0xFF0A0A0A) else Color(0xFFFAFAFA)
+    val effectiveAccent = if (isMaterialYou) MaterialTheme.colorScheme.primary else monochromeAccent
+    val effectiveOnAccent = if (isMaterialYou) MaterialTheme.colorScheme.onPrimary else if (isDark) Color.Black else Color.White
+    val effectiveCardBg = if (isMaterialYou) MaterialTheme.colorScheme.surfaceContainer else cardBgColor
+    val fieldShape = if (isMaterialYou) RoundedCornerShape(18.dp) else RoundedCornerShape(12.dp)
+    val buttonShape = if (isMaterialYou) CircleShape else RoundedCornerShape(12.dp)
+    val hasAnySearchData = searchQueryInput.isNotEmpty() || searchResultsList.isNotEmpty()
 
     val filteredResults = remember(searchResultsList, selectedZoneIndex) {
         if (selectedZoneIndex == 0) {
@@ -76,41 +61,22 @@ fun SearchTabContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(if (isDark) Color(0xFF0A0A0A) else Color(0xFFFAFAFA))
+            .background(screenBg)
             .padding(24.dp),
         verticalArrangement = Arrangement.SpaceBetween
     ) {
         Column(
             modifier = Modifier.fillMaxWidth(),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Start,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                IconButton(
-                    onClick = onOpenHistory,
-                    modifier = Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR)))
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.History,
-                        contentDescription = strings.story_searches,
-                        tint = if (isDark) Color.White.copy(alpha = 0.7f) else Color.Black.copy(alpha = 0.7f),
-                        modifier = Modifier.size(22.dp)
-                    )
-                }
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = strings.searches_matches,
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.Gray,
-                    letterSpacing = 1.sp
-                )
-            }
+            Text(
+                text = strings.searches_matches,
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = textColorPrimary
+            )
 
-            TextField(
+            OutlinedTextField(
                 value = searchQueryInput,
                 onValueChange = onSearchQueryChange,
                 placeholder = {
@@ -121,22 +87,50 @@ fun SearchTabContent(
                 },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true,
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
+                shape = fieldShape,
+                colors = OutlinedTextFieldDefaults.colors(
                     focusedTextColor = if (isDark) Color.White else Color.Black,
                     unfocusedTextColor = if (isDark) Color.White else Color.Black,
-                    focusedIndicatorColor = monochromeAccent,
-                    unfocusedIndicatorColor = monochromeSecondary
+                    focusedBorderColor = effectiveAccent,
+                    unfocusedBorderColor = monochromeSecondary.copy(alpha = 0.5f)
                 ),
-                textStyle = TextStyle(fontSize = 18.sp, fontWeight = FontWeight.Normal)
+                textStyle = TextStyle(fontSize = 16.sp, fontWeight = FontWeight.Normal)
             )
 
+            if (hasAnySearchData) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    TextButton(
+                        onClick = {
+                            selectedZoneIndex = 0
+                            onClearSearch()
+                        },
+                        shape = buttonShape,
+                        modifier = Modifier.pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR)))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Filled.Clear,
+                            contentDescription = strings.btnClearFields,
+                            tint = effectiveAccent,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            text = strings.btnClearFields,
+                            color = effectiveAccent,
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+            }
             if (searchResultsList.isNotEmpty() && !searchResultsList.contains(strings.notFound)) {
                 ScrollableTabRow(
                     selectedTabIndex = selectedZoneIndex,
                     containerColor = Color.Transparent,
-                    contentColor = monochromeAccent,
+                    contentColor = effectiveAccent,
                     edgePadding = 0.dp
                 ) {
                     zones.forEachIndexed { index, zone ->
@@ -152,8 +146,8 @@ fun SearchTabContent(
             if (filteredResults.isNotEmpty()) {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = cardBgColor)
+                    shape = if (isMaterialYou) RoundedCornerShape(24.dp) else RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = effectiveCardBg)
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text(
@@ -169,12 +163,12 @@ fun SearchTabContent(
                         Box(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .heightIn(max = 240.dp)
+                                .heightIn(max = 260.dp)
                                 .background(
                                     if (isDark) Color(0xFF141414) else Color(0xFFEFEFEF),
                                     RoundedCornerShape(12.dp)
                                 )
-                                .padding(8.dp)
+                                .padding(12.dp)
                         ) {
                             Column(
                                 modifier = Modifier
@@ -214,13 +208,20 @@ fun SearchTabContent(
         ) {
             Button(
                 onClick = { if (!isSearchLoading) onRunSearch() },
-                modifier = Modifier.fillMaxWidth().height(50.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = if (isSearchLoading) Color.Gray else monochromeAccent, contentColor = if (isDark) Color.Black else Color.White),
-                shape = RoundedCornerShape(12.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp)
+                    .pointerHoverIcon(PointerIcon(Cursor(Cursor.HAND_CURSOR))),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = if (isSearchLoading) Color.Gray else effectiveAccent,
+                    contentColor = effectiveOnAccent
+                ),
+                shape = buttonShape
             ) {
                 Text(
                     text = if (isSearchLoading) strings.searchLoading else strings.findMatches,
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
                 )
             }
         }

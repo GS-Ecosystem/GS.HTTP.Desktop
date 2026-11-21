@@ -1,12 +1,7 @@
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.*
-import androidx.compose.material3.*
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalUriHandler
 import kotlinx.coroutines.Dispatchers
@@ -21,68 +16,51 @@ import java.io.IOException
 import java.net.InetAddress
 import java.net.InetSocketAddress
 import java.net.Socket
+import java.net.URI
+import java.util.Locale
 import java.util.concurrent.TimeUnit
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManager
 import javax.net.ssl.X509TrustManager
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.togetherWith
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainAppScreen(
     appThemeSetting: String,
     onThemeChange: (String) -> Unit,
+    currentLanguage: String,
+    onLanguageChange: (String) -> Unit,
+    isMaterialYou: Boolean,
+    onMaterialYouChange: (Boolean) -> Unit,
     selectedTab: String,
     onTabChange: (String) -> Unit
 ) {
     val scope = rememberCoroutineScope()
     val uriHandler = LocalUriHandler.current
-
-    val palette = MaterialTheme.colorScheme
-
-
-
     val prefs = remember { java.util.prefs.Preferences.userRoot().node("app_prefs") }
-    val defaultUserAgent = "GS.Monitor/1.0"
-
-
-
-
-    var currentLanguage by remember {
-        mutableStateOf(prefs.get("app_lang", "ru"))
-    }
-
+    val defaultUserAgent = "GS.HTTP/1.0"
+    val version = "1.0.4"
 
     val strings = remember(currentLanguage) {
         getStringsForLanguage(currentLanguage)
     }
 
+    var isThemeScreenOpen by remember { mutableStateOf(false) }
+    var isLanguageScreenOpen by remember { mutableStateOf(false) }
+    var isResponseInspectorOpen by remember { mutableStateOf(false) }
 
+    LaunchedEffect(selectedTab) {
+        isThemeScreenOpen = false
+        isLanguageScreenOpen = false
+        isResponseInspectorOpen = false
+    }
 
-
-
-    val version = "1.0.3"
-
-    var fadeVal by remember { mutableStateOf(1.0f) }
-    val animatedFadeVal by animateFloatAsState(
-        targetValue = fadeVal,
-        animationSpec = spring(
-            stiffness = Spring.StiffnessLow,
-            dampingRatio = Spring.DampingRatioNoBouncy
-        ),
-        label = "global_screen_fade"
-    )
-    var isLanguageOpen by remember { mutableStateOf(false) }
-
-    var isBottomSheetOpen by remember { mutableStateOf(false) }
-    var isWelcomeSettingsOpen by remember { mutableStateOf(false) }
-    var isScanSettingsOpen by remember { mutableStateOf(false) }
-    var isHistoryOpen by remember { mutableStateOf(false) }
-    var isMenuExpanded by remember { mutableStateOf(false) }
-    var isThemeDialogOpen by remember { mutableStateOf(false) }
-
-    var isResponseInspectorSheetOpen by remember { mutableStateOf(false) }
-    val inspectorSheetState = rememberModalBottomSheetState()
-    var activeSearchTab by remember { mutableStateOf("BODY") }
+    var activeSearchTab by remember { mutableStateOf("Body") }
     var searchQuery by remember { mutableStateOf("") }
 
     var followRedirectsSetting by remember { mutableStateOf(prefs.getBoolean("follow_redirects", true)) }
@@ -92,11 +70,15 @@ fun MainAppScreen(
     var customUserAgentSetting by remember { mutableStateOf(prefs.get("user_agent", defaultUserAgent)) }
 
     var urlInput by remember { mutableStateOf("") }
+    var headersInput by remember { mutableStateOf("") }
+    var bodyInput by remember { mutableStateOf("") }
+
     var resText by remember { mutableStateOf("") }
     var resTextColor by remember { mutableStateOf(Color.White) }
-
     var safeText by remember { mutableStateOf("") }
     var safeTextColor by remember { mutableStateOf(Color.White) }
+    var responseTimeText by remember { mutableStateOf("") }
+    var responseSizeText by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
     var responseBodyText by remember { mutableStateOf("") }
@@ -114,14 +96,12 @@ fun MainAppScreen(
     }
 
     val saveHistoryToPrefs: () -> Unit = {
-        val combined = scanHistoryList.joinToString("\n")
-        prefs.put("scan_history_items", combined)
+        prefs.put("scan_history_items", scanHistoryList.joinToString("\n"))
     }
 
     val httpMethods = listOf("GET", "POST", "PUT", "HEAD", "DELETE", "PATCH", "OPTIONS", "TRACE", "CONNECT")
     var selectedMethodIndex by remember { mutableStateOf(0) }
     val selectedMethod = httpMethods[selectedMethodIndex]
-
 
     val isDark = when (appThemeSetting) {
         "dark" -> true
@@ -131,11 +111,7 @@ fun MainAppScreen(
 
     val textColorPrimary = if (isDark) Color.White else Color(0xFF1C1B1F)
     val textColorSecondary = if (isDark) Color.Gray else Color(0xFF5E5E62)
-    val settingsIconColor = if (isDark) Color.White.copy(alpha = 0.6f) else Color.Black.copy(alpha = 0.6f)
-    val dropdownBgColor = if (isDark) Color(0xFF121212) else Color(0xFFF5F5F5)
-    val dropdownTextColor = if (isDark) Color.White else Color.Black
     val cardBgColor = if (isDark) Color(0xFF1A1A1A) else Color(0xFFEEEEEE)
-
     val monochromeAccent = if (isDark) Color.White else Color.Black
     val monochromeSecondary = if (isDark) Color(0xFF888888) else Color(0xFF666666)
 
@@ -172,7 +148,7 @@ fun MainAppScreen(
 
                 withContext(Dispatchers.Main) {
                     if (activeDomains.isEmpty()) {
-                        searchResultsList.add("Ничего не найдено")
+                        searchResultsList.add(strings.notFound)
                     } else {
                         val sorted = activeDomains.sortedBy { ext ->
                             when {
@@ -192,7 +168,6 @@ fun MainAppScreen(
             }
         }
     }
-
     val runScan: () -> Unit = {
         val url = urlInput.trim()
         val hasSpaces = url.contains(" ")
@@ -204,12 +179,15 @@ fun MainAppScreen(
             resTextColor = monochromeAccent
             safeText = strings.statusInvalid
             safeTextColor = monochromeSecondary
+            responseTimeText = ""
+            responseSizeText = ""
             isLoading = false
         } else {
-
             isLoading = true
             resText = ""
             safeText = ""
+            responseTimeText = ""
+            responseSizeText = ""
             responseBodyText = ""
             responseHeadersText = ""
             responseCookiesText = ""
@@ -217,122 +195,228 @@ fun MainAppScreen(
 
             scope.launch(Dispatchers.IO) {
                 val fullUrl = if (url.startsWith("http")) url else "https://$url"
-                try {
-                    val clientBuilder = OkHttpClient.Builder()
-                        .connectTimeout(requestTimeoutSetting.toLong(), TimeUnit.SECONDS)
-                        .readTimeout(requestTimeoutSetting.toLong(), TimeUnit.SECONDS)
-                        .followRedirects(followRedirectsSetting)
+                val startTimeNs = System.nanoTime()
 
-                    if (ignoreSslErrorsSetting && !verifySslSetting) {
-                        try {
-                            val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
-                                override fun checkClientTrusted(
-                                    chain: Array<java.security.cert.X509Certificate>,
-                                    authType: String
-                                ) {
-                                }
+                if (selectedMethod == "CONNECT") {
+                    try {
+                        val uri = URI(fullUrl)
+                        val host = uri.host ?: throw IllegalArgumentException("Invalid host")
+                        val port = if (uri.port != -1) uri.port else if (uri.scheme == "http") 80 else 443
 
-                                override fun checkServerTrusted(
-                                    chain: Array<java.security.cert.X509Certificate>,
-                                    authType: String
-                                ) {
-                                }
-
-                                override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
-                            })
-                            val sslContext = SSLContext.getInstance("Ssl")
-                            sslContext.init(null, trustAllCerts, java.security.SecureRandom())
-                            clientBuilder.sslSocketFactory(
-                                sslContext.socketFactory,
-                                trustAllCerts[0] as X509TrustManager
-                            )
-                            clientBuilder.hostnameVerifier { _, _ -> true }
-                        } catch (_: Exception) {
+                        Socket().use { socket ->
+                            socket.connect(InetSocketAddress(host, port), requestTimeoutSetting * 1000)
                         }
-                    }
+                        val elapsedMs = (System.nanoTime() - startTimeNs) / 1_000_000
 
-                    val client = clientBuilder.build()
-
-                    val requestBuilder = Request.Builder()
-                        .url(fullUrl)
-                        .header("User-Agent", customUserAgentSetting)
-
-                    val mediaType = "application/json; charset=utf-8".toMediaType()
-                    val emptyBody = ByteArray(0).toRequestBody(mediaType)
-
-                    when (selectedMethod) {
-                        "GET" -> requestBuilder.get()
-                        "POST" -> requestBuilder.post(emptyBody)
-                        "PUT" -> requestBuilder.put(emptyBody)
-                        "HEAD" -> requestBuilder.head()
-                        "DELETE" -> requestBuilder.delete(emptyBody)
-                        "PATCH" -> requestBuilder.patch(emptyBody)
-                        "OPTIONS" -> requestBuilder.method("OPTIONS", null)
-                        "TRACE" -> requestBuilder.method("TRACE", null)
-                        "CONNECT" -> requestBuilder.method("CONNECT", null)
-                    }
-
-
-                    client.newCall(requestBuilder.build()).execute().use { response ->
-                        val code = response.code
-                        resText = "HTTP $code"
+                        resText = "CONNECT 200"
                         resTextColor = monochromeAccent
-                        val isHttps = response.request.url.isHttps
-                        safeText = if (isHttps) strings.statusSsl else strings.statusHttp
+                        safeText = "${strings.statusConnected} ($host:$port)"
                         safeTextColor = monochromeSecondary
+                        responseTimeText = "$elapsedMs ms"
+                        responseSizeText = "0 B"
                         lastValidUrl = fullUrl
-                        responseBodyText = response.body?.string() ?: ""
-                        responseHeadersText = response.headers.joinToString("\n") { "${it.first}: ${it.second}" }
-                        val cookies = response.headers("Set-Cookie")
-                        responseCookiesText =
-                            if (cookies.isNotEmpty()) cookies.joinToString(separator = "\n") else strings.cookiesEmpty
+                        responseBodyText = "TCP connection established successfully to $host:$port in $elapsedMs ms."
+                        responseHeadersText = "Host: $host\nPort: $port\nProtocol: TCP"
+                        responseCookiesText = strings.cookiesEmpty
 
-                        scanHistoryList.add(
-                            0,
-                            "[$selectedMethod] $fullUrl -> HTTP $code (VerifySSL: $verifySslSetting)"
-                        )
+                        scanHistoryList.add(0, "[CONNECT] $host:$port -> 200 OK ($elapsedMs ms)")
                         saveHistoryToPrefs()
+                    } catch (_: IllegalArgumentException) {
+                        resText = strings.statusError
+                        resTextColor = monochromeAccent
+                        safeText = strings.statusInvalid
+                        safeTextColor = monochromeSecondary
+                    } catch (_: IOException) {
+                        resText = strings.statusError
+                        resTextColor = monochromeAccent
+                        safeText = strings.statusNoServer
+                        safeTextColor = monochromeSecondary
+                    } finally {
+                        isLoading = false
                     }
-                } catch (_: IllegalArgumentException) {
-                    resText = strings.statusError
-                    resTextColor = monochromeAccent
-                    safeText = strings.statusInvalid
-                    safeTextColor = monochromeSecondary
-                } catch (_: IOException) {
-                    resText = strings.statusError
-                    resTextColor = monochromeAccent
-                    safeText = strings.statusNoServer
-                    safeTextColor = monochromeSecondary
-                } finally {
-                    isLoading = false
-                }
+                } else {
+                    try {
+                        val clientBuilder = OkHttpClient.Builder()
+                            .connectTimeout(requestTimeoutSetting.toLong(), TimeUnit.SECONDS)
+                            .readTimeout(requestTimeoutSetting.toLong(), TimeUnit.SECONDS)
+                            .followRedirects(followRedirectsSetting)
 
+                        if (ignoreSslErrorsSetting && !verifySslSetting) {
+                            try {
+                                val trustAllCerts = arrayOf<TrustManager>(object : X509TrustManager {
+                                    override fun checkClientTrusted(
+                                        chain: Array<java.security.cert.X509Certificate>,
+                                        authType: String
+                                    ) {}
+                                    override fun checkServerTrusted(
+                                        chain: Array<java.security.cert.X509Certificate>,
+                                        authType: String
+                                    ) {}
+                                    override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
+                                })
+                                val sslContext = SSLContext.getInstance("TLS")
+                                sslContext.init(null, trustAllCerts, java.security.SecureRandom())
+                                clientBuilder.sslSocketFactory(
+                                    sslContext.socketFactory,
+                                    trustAllCerts[0] as X509TrustManager
+                                )
+                                clientBuilder.hostnameVerifier { _, _ -> true }
+                            } catch (_: Exception) {
+                            }
+                        }
+
+                        val client = clientBuilder.build()
+                        val requestBuilder = Request.Builder()
+                            .url(fullUrl)
+                            .header("User-Agent", customUserAgentSetting)
+
+                        if (headersInput.isNotBlank()) {
+                            headersInput.lines().forEach { line ->
+                                val colonIndex = line.indexOf(':')
+                                if (colonIndex > 0) {
+                                    val key = line.substring(0, colonIndex).trim()
+                                    val value = line.substring(colonIndex + 1).trim()
+                                    if (key.isNotEmpty()) {
+                                        requestBuilder.header(key, value)
+                                    }
+                                }
+                            }
+                        }
+
+                        val trimmedBody = bodyInput.trim()
+                        val isJson = trimmedBody.startsWith("{") || trimmedBody.startsWith("[")
+                        val mediaType = if (isJson) {
+                            "application/json; charset=utf-8".toMediaType()
+                        } else {
+                            "text/plain; charset=utf-8".toMediaType()
+                        }
+                        val requestBody = bodyInput.toByteArray(Charsets.UTF_8).toRequestBody(mediaType)
+
+                        when (selectedMethod) {
+                            "GET" -> requestBuilder.get()
+                            "POST" -> requestBuilder.post(requestBody)
+                            "PUT" -> requestBuilder.put(requestBody)
+                            "HEAD" -> requestBuilder.head()
+                            "DELETE" -> requestBuilder.delete(requestBody)
+                            "PATCH" -> requestBuilder.patch(requestBody)
+                            "OPTIONS" -> requestBuilder.method("OPTIONS", null)
+                            "TRACE" -> requestBuilder.method("TRACE", null)
+                        }
+
+                        client.newCall(requestBuilder.build()).execute().use { response ->
+                            val code = response.code
+                            val bodyBytes = response.body?.bytes() ?: ByteArray(0)
+                            val elapsedMs = (System.nanoTime() - startTimeNs) / 1_000_000
+
+                            resText = "HTTP $code"
+                            resTextColor = monochromeAccent
+                            val isHttps = response.request.url.isHttps
+                            safeText = if (isHttps) strings.statusSsl else strings.statusHttp
+                            safeTextColor = monochromeSecondary
+                            responseTimeText = "$elapsedMs ms"
+                            responseSizeText = formatBytesSize(bodyBytes.size.toLong())
+
+                            lastValidUrl = fullUrl
+                            responseBodyText = bodyBytes.toString(Charsets.UTF_8)
+                            responseHeadersText = response.headers.joinToString("\n") { "${it.first}: ${it.second}" }
+                            val cookies = response.headers("Set-Cookie")
+                            responseCookiesText =
+                                if (cookies.isNotEmpty()) cookies.joinToString(separator = "\n") else strings.cookiesEmpty
+
+                            scanHistoryList.add(
+                                0,
+                                "[$selectedMethod] $fullUrl -> HTTP $code ($elapsedMs ms)"
+                            )
+                            saveHistoryToPrefs()
+                        }
+                    } catch (_: IllegalArgumentException) {
+                        resText = strings.statusError
+                        resTextColor = monochromeAccent
+                        safeText = strings.statusInvalid
+                        safeTextColor = monochromeSecondary
+                    } catch (_: IOException) {
+                        resText = strings.statusError
+                        resTextColor = monochromeAccent
+                        safeText = strings.statusNoServer
+                        safeTextColor = monochromeSecondary
+                    } finally {
+                        isLoading = false
+                    }
+                }
             }
         }
     }
+    val activeScreenKey = when {
+        isResponseInspectorOpen -> "inspector"
+        isThemeScreenOpen -> "theme"
+        isLanguageScreenOpen -> "language"
+        else -> selectedTab
+    }
 
-    Box(modifier = Modifier.fillMaxSize().alpha(animatedFadeVal.coerceIn(0f, 1f))) {
-        when (selectedTab) {
-            "home" -> {
-                HomeTabContent(
-                    isDark = isDark,
+    AnimatedContent(
+        targetState = activeScreenKey,
+        modifier = Modifier.fillMaxSize(),
+        transitionSpec = {
+            fadeIn(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) togetherWith
+                    fadeOut(animationSpec = spring(stiffness = Spring.StiffnessMediumLow))
+        },
+        label = "screen_transition"
+    ) { screen ->
+        when (screen) {
+            "inspector" -> {
+                ResponseInspectorScreen(
+                    monochromeAccent = monochromeAccent,
+                    monochromeSecondary = monochromeSecondary,
                     textColorPrimary = textColorPrimary,
-                    settingsIconColor = settingsIconColor,
-                    dropdownBgColor = dropdownBgColor,
-                    dropdownTextColor = dropdownTextColor,
+                    textColorSecondary = textColorSecondary,
+                    isDark = isDark,
+                    isMaterialYou = isMaterialYou,
+                    strings = strings,
+                    lastValidUrl = lastValidUrl,
                     uriHandler = uriHandler,
-                    onMenuOpen = { isMenuExpanded = true },
-                    isMenuExpanded = isMenuExpanded,
-                    onMenuDismiss = { isMenuExpanded = false },
-                    onOpenInfo = { isBottomSheetOpen = true },
-                    onOpenSettings = { isWelcomeSettingsOpen = true },
-                    strings = strings
+                    activeSearchTab = activeSearchTab,
+                    onActiveSearchTabChange = { activeSearchTab = it },
+                    searchQuery = searchQuery,
+                    onSearchQueryChange = { searchQuery = it },
+                    responseBodyText = responseBodyText,
+                    responseHeadersText = responseHeadersText,
+                    responseCookiesText = responseCookiesText,
+                    onBack = { isResponseInspectorOpen = false }
+                )
+            }
+
+            "theme" -> {
+                ThemeSelectionScreen(
+                    isDark = isDark,
+                    isMaterialYou = isMaterialYou,
+                    cardBgColor = cardBgColor,
+                    appThemeSetting = appThemeSetting,
+                    textColorPrimary = textColorPrimary,
+                    monochromeAccent = monochromeAccent,
+                    strings = strings,
+                    onThemeChange = onThemeChange,
+                    onBack = { isThemeScreenOpen = false }
+                )
+            }
+
+            "language" -> {
+                LanguageScreen(
+                    isDark = isDark,
+                    isMaterialYou = isMaterialYou,
+                    cardBgColor = cardBgColor,
+                    currentLanguage = currentLanguage,
+                    textColorPrimary = textColorPrimary,
+                    monochromeAccent = monochromeAccent,
+                    strings = strings,
+                    onLanguageSelected = onLanguageChange,
+                    onBack = { isLanguageScreenOpen = false }
                 )
             }
 
             "scan" -> {
                 ScanTabContent(
                     isDark = isDark,
+                    isMaterialYou = isMaterialYou,
                     monochromeAccent = monochromeAccent,
                     monochromeSecondary = monochromeSecondary,
                     cardBgColor = cardBgColor,
@@ -341,15 +425,29 @@ fun MainAppScreen(
                     onMethodIndexChange = { selectedMethodIndex = it },
                     urlInput = urlInput,
                     onUrlInputChange = { urlInput = it },
+                    headersInput = headersInput,
+                    onHeadersInputChange = { headersInput = it },
+                    bodyInput = bodyInput,
+                    onBodyInputChange = { bodyInput = it },
+                    onClearFields = {
+                        urlInput = ""
+                        headersInput = ""
+                        bodyInput = ""
+                        resText = ""
+                        safeText = ""
+                        responseTimeText = ""
+                        responseSizeText = ""
+                        lastValidUrl = ""
+                    },
                     resText = resText,
                     resTextColor = resTextColor,
                     safeText = safeText,
                     safeTextColor = safeTextColor,
+                    responseTimeText = responseTimeText,
+                    responseSizeText = responseSizeText,
                     isLoading = isLoading,
                     lastValidUrl = lastValidUrl,
-                    onOpenHistory = { isHistoryOpen = true },
-                    onOpenSettings = { isScanSettingsOpen = true },
-                    onOpenInspector = { isResponseInspectorSheetOpen = true },
+                    onOpenInspector = { isResponseInspectorOpen = true },
                     onRunScan = runScan,
                     strings = strings,
                     uriHandler = uriHandler,
@@ -359,15 +457,19 @@ fun MainAppScreen(
             "search" -> {
                 SearchTabContent(
                     isDark = isDark,
+                    isMaterialYou = isMaterialYou,
                     monochromeAccent = monochromeAccent,
                     monochromeSecondary = monochromeSecondary,
                     textColorPrimary = textColorPrimary,
                     cardBgColor = cardBgColor,
                     searchQueryInput = searchQueryInput,
                     onSearchQueryChange = { searchQueryInput = it },
+                    onClearSearch = {
+                        searchQueryInput = ""
+                        searchResultsList.clear()
+                    },
                     searchResultsList = searchResultsList,
                     isSearchLoading = isSearchLoading,
-                    onOpenHistory = { isHistoryOpen = true },
                     onRunSearch = runSearch,
                     onSelectSite = { site ->
                         urlInput = site
@@ -376,154 +478,104 @@ fun MainAppScreen(
                     strings = strings
                 )
             }
+
+            "settings" -> {
+                SettingsScreen(
+                    isDark = isDark,
+                    isMaterialYou = isMaterialYou,
+                    onMaterialYouChange = onMaterialYouChange,
+                    cardBgColor = cardBgColor,
+                    textColorPrimary = textColorPrimary,
+                    monochromeAccent = monochromeAccent,
+                    monochromeSecondary = monochromeSecondary,
+                    followRedirectsSetting = followRedirectsSetting,
+                    onFollowRedirectsChange = { followRedirectsSetting = it; prefs.putBoolean("follow_redirects", it) },
+                    requestTimeoutSetting = requestTimeoutSetting,
+                    onRequestTimeoutChange = { requestTimeoutSetting = it; prefs.putInt("request_timeout", it) },
+                    verifySslSetting = verifySslSetting,
+                    onVerifySslChange = {
+                        verifySslSetting = it
+                        prefs.putBoolean("verify_ssl", it)
+                        if (it) {
+                            ignoreSslErrorsSetting = false
+                            prefs.putBoolean("ignore_ssl", false)
+                        }
+                    },
+                    ignoreSslErrorsSetting = ignoreSslErrorsSetting,
+                    onIgnoreSslChange = {
+                        ignoreSslErrorsSetting = it
+                        prefs.putBoolean("ignore_ssl", it)
+                        if (it) {
+                            verifySslSetting = false
+                            prefs.putBoolean("verify_ssl", false)
+                        }
+                    },
+                    customUserAgentSetting = customUserAgentSetting,
+                    defaultUserAgent = defaultUserAgent,
+                    onUserAgentChange = {
+                        customUserAgentSetting = it
+                        prefs.put("user_agent", it)
+                    },
+                    onOpenThemeScreen = { isThemeScreenOpen = true },
+                    onOpenLanguageScreen = { isLanguageScreenOpen = true },
+                    onClearData = {
+                        scanHistoryList.clear()
+                        saveHistoryToPrefs()
+                        urlInput = ""
+                        headersInput = ""
+                        bodyInput = ""
+                        searchQueryInput = ""
+                        searchResultsList.clear()
+                        resText = ""
+                        safeText = ""
+                        responseTimeText = ""
+                        responseSizeText = ""
+                        responseBodyText = ""
+                        responseHeadersText = ""
+                        responseCookiesText = ""
+                        lastValidUrl = ""
+                    },
+                    strings = strings
+                )
+            }
+
+            "history" -> {
+                HistoryScreen(
+                    isDark = isDark,
+                    isMaterialYou = isMaterialYou,
+                    scanHistoryList = scanHistoryList,
+                    cardBgColor = cardBgColor,
+                    textColorPrimary = textColorPrimary,
+                    monochromeAccent = monochromeAccent,
+                    onClearHistory = {
+                        scanHistoryList.clear()
+                        saveHistoryToPrefs()
+                    },
+                    strings = strings
+                )
+            }
+
+            "info" -> {
+                InfoScreen(
+                    isDark = isDark,
+                    isMaterialYou = isMaterialYou,
+                    version = version,
+                    cardBgColor = cardBgColor,
+                    textColorPrimary = textColorPrimary,
+                    monochromeAccent = monochromeAccent,
+                    uriHandler = uriHandler,
+                    strings = strings
+                )
+            }
         }
-    }
-
-    if (isBottomSheetOpen) {
-        InfoBottomSheetDialog(
-            version = version,
-            dropdownBgColor = dropdownBgColor,
-            dropdownTextColor = dropdownTextColor,
-            monochromeAccent = monochromeAccent,
-            uriHandler = uriHandler,
-            onDismiss = { isBottomSheetOpen = false },
-            strings = strings,
-        )
-    }
-
-    if (isWelcomeSettingsOpen || isScanSettingsOpen) {
-        SettingsDialog(
-            isDark = isDark,
-            dropdownBgColor = dropdownBgColor,
-            dropdownTextColor = dropdownTextColor,
-            monochromeAccent = monochromeAccent,
-            monochromeSecondary = monochromeSecondary,
-            followRedirectsSetting = followRedirectsSetting,
-            onFollowRedirectsChange = { followRedirectsSetting = it; prefs.putBoolean("follow_redirects", it) },
-            requestTimeoutSetting = requestTimeoutSetting,
-            onRequestTimeoutChange = { requestTimeoutSetting = it; prefs.putInt("request_timeout", it) },
-            verifySslSetting = verifySslSetting,
-            onVerifySslChange = {
-                verifySslSetting = it
-                prefs.putBoolean("verify_ssl", it)
-                if (it) {
-                    ignoreSslErrorsSetting = false
-                    prefs.putBoolean("ignore_ssl", false)
-                }
-            },
-            ignoreSslErrorsSetting = ignoreSslErrorsSetting,
-            onIgnoreSslChange = {
-                ignoreSslErrorsSetting = it
-                prefs.putBoolean("ignore_ssl", it)
-                if (it) {
-                    verifySslSetting = false
-                    prefs.putBoolean("verify_ssl", false)
-                }
-            },
-            strings = strings,
-            onLanguageDialogOpen = { isLanguageOpen = true }, // <--- ЗАПЯТАЯ ИСПРАВЛЕНА ТУТ
-            customUserAgentSetting = customUserAgentSetting,
-            defaultUserAgent = defaultUserAgent,
-            onUserAgentChange = {
-                customUserAgentSetting = it
-                prefs.put("user_agent", it)
-            },
-            onOpenThemeDialog = { isThemeDialogOpen = true },
-            onClearData = {
-                scanHistoryList.clear()
-                saveHistoryToPrefs()
-                urlInput = ""
-                searchQueryInput = ""
-                searchResultsList.clear()
-                resText = ""
-                safeText = ""
-                responseBodyText = ""
-                responseHeadersText = ""
-                responseCookiesText = ""
-                lastValidUrl = ""
-            },
-            onDismiss = { isWelcomeSettingsOpen = false; isScanSettingsOpen = false }
-        )
-    }
-
-
-    if (isHistoryOpen) {
-        HistoryDialog(
-            scanHistoryList = scanHistoryList,
-            dropdownBgColor = dropdownBgColor,
-            dropdownTextColor = dropdownTextColor,
-            monochromeAccent = monochromeAccent,
-            monochromeSecondary = monochromeSecondary,
-            onClearHistory = {
-                scanHistoryList.clear()
-                saveHistoryToPrefs()
-            },
-            onDismiss = { isHistoryOpen = false },
-            strings = strings
-        )
-    }
-
-    if (isThemeDialogOpen) {
-        ThemeSelectionDialog(
-            appThemeSetting = appThemeSetting,
-            dropdownBgColor = dropdownBgColor,
-            dropdownTextColor = dropdownTextColor,
-            monochromeAccent = monochromeAccent,
-            onThemeChange = onThemeChange,
-            onDismiss = { isThemeDialogOpen = false },
-            strings = strings,
-        )
-    }
-
-
-
-    LanguageDialog(
-        isOpen = isLanguageOpen,
-        currentLanguage = currentLanguage,
-        onLanguageSelected = { selectedLang ->
-            currentLanguage = selectedLang
-        },
-        onDismiss = { isLanguageOpen = false },
-        strings = strings,
-        backgroundColor = palette.surfaceContainer,
-        textPrimaryColor = palette.onSurface,
-        textSecondaryColor = palette.onSurfaceVariant
-    )
-
-
-
-
-
-
-    if (isResponseInspectorSheetOpen) {
-        ResponseInspectorBottomSheet(
-            inspectorSheetState = inspectorSheetState,
-            dropdownBgColor = dropdownBgColor,
-            dropdownTextColor = dropdownTextColor,
-            monochromeAccent = monochromeAccent,
-            monochromeSecondary = monochromeSecondary,
-            textColorPrimary = textColorPrimary,
-            textColorSecondary = textColorSecondary,
-            isDark = isDark,
-            strings = strings,
-            lastValidUrl = lastValidUrl,
-            uriHandler = uriHandler,
-            activeSearchTab = activeSearchTab,
-            onActiveSearchTabChange = { activeSearchTab = it },
-            searchQuery = searchQuery,
-            onSearchQueryChange = { searchQuery = it },
-            responseBodyText = responseBodyText,
-            responseHeadersText = responseHeadersText,
-            responseCookiesText = responseCookiesText,
-            onDismiss = { isResponseInspectorSheetOpen = false }
-        )
     }
 }
 
 
-
-
-
-
-
-private fun cardBgCardColorInternal(fallback: Color): Color = fallback
+private fun formatBytesSize(bytes: Long): String {
+    return when {
+        bytes < 1024 -> "$bytes B"
+        bytes < 1024 * 1024 -> String.format(Locale.US, "%.1f KB", bytes / 1024.0)
+        else -> String.format(Locale.US, "%.2f MB", bytes / (1024.0 * 1024.0))
+    }
+}
