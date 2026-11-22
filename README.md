@@ -39,10 +39,10 @@
   <summary>View Screenshots</summary>
   <br>
   <p align="center">
-    <img src="https://github.com/user-attachments/assets/070dbef2-cbf0-4d0c-b49f-5eaffe8a18c9" alt="Скриншот 1" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-    <img src="https://github.com/user-attachments/assets/5215acef-86b5-4c52-b8ba-49fd7601a6ab" alt="Скриншот 2" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-    <img src="https://github.com/user-attachments/assets/31483ede-fb3a-4edd-8f75-7dab358a94af" alt="Скриншот 3" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-    <img src="https://github.com/user-attachments/assets/b9603544-3164-4af2-9ace-84f8c26a050c" alt="Скриншот 4" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+    <img src="https://github.com/user-attachments/assets/d9a7429f-bdc9-4498-ba8b-cdba9be3061b" alt="Скриншот 1" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+    <img src="https://github.com/user-attachments/assets/a01a7629-5072-47bf-80b2-a962e0e997fd" alt="Скриншот 2" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+    <img src="https://github.com/user-attachments/assets/ec25f800-e00f-4b8e-ad7c-053333c6e855" alt="Скриншот 3" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
+    <img src="https://github.com/user-attachments/assets/93aa15f9-e521-4324-aa34-59deff0b696c" alt="Скриншот 4" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
     <img src="https://github.com/user-attachments/assets/b9a9ebc8-5059-435d-bb0b-9d28894e4554" alt="Скриншот 5" width="80%" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
   </p>
 </details>
