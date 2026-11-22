@@ -43,7 +43,6 @@
     <img src="https://github.com/user-attachments/assets/a01a7629-5072-47bf-80b2-a962e0e997fd" alt="Скриншот 2" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
     <img src="https://github.com/user-attachments/assets/ec25f800-e00f-4b8e-ad7c-053333c6e855" alt="Скриншот 3" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
     <img src="https://github.com/user-attachments/assets/93aa15f9-e521-4324-aa34-59deff0b696c" alt="Скриншот 4" width="80%" style="margin-bottom: 15px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
-    <img src="https://github.com/user-attachments/assets/b9a9ebc8-5059-435d-bb0b-9d28894e4554" alt="Скриншот 5" width="80%" style="border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2);">
   </p>
 </details>
 
