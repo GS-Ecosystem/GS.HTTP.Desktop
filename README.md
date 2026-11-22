@@ -6,7 +6,7 @@
 
 # GS.HTTP
 <p align="start">
-  The application card is located on <a href="https://alternativeto.net/software/gs-http/about/" target="_blank">AlternativeTo</a>
+  The application card is located on <a href="https://alternativeto.net/software/gs-http/about/">AlternativeTo</a>
 </p>
 
 <p align="start">
