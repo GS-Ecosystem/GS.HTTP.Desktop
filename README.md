@@ -5,7 +5,9 @@
 </p>
 
 # GS.HTTP
-
+<p align="start">
+  The application card is located on AlternativeTo
+</p>
 <p align="start">
   <b>Desktop HTTP traffic analysis built on Jetpack Compose Multiplatform (Desktop).</b>
 </p>
