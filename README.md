@@ -6,7 +6,7 @@
 
 # GS.HTTP
 <p align="start">
-  The application card is located on AlternativeTo
+  The application card is located on [*AlternativeTo*](https://alternativeto.net/software/gs-http/about/)
 </p>
 <p align="start">
   <b>Desktop HTTP traffic analysis built on Jetpack Compose Multiplatform (Desktop).</b>
